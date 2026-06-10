@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Reserva</title>
+<style>
+/* =====================================================
+   RESET & BASE
+===================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0D1117;
+  --surface:   #161B22;
+  --card:      #1C2330;
+  --border:    #30363D;
+  --green:     #00C896;
+  --green-dim: rgba(0,200,150,0.15);
+  --gold:      #C9A84C;
+  --gold-dim:  rgba(201,168,76,0.15);
+  --blue:      #58A6FF;
+  --blue-dim:  rgba(88,166,255,0.12);
+  --red:       #F85149;
+  --text:      #F0F6FC;
+  --text-2:    #8B949E;
+  --text-3:    #484F58;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --shadow:    0 8px 32px rgba(0,0,0,0.4);
+  --transition: 0.22s cubic-bezier(.4,0,.2,1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* =====================================================
+   MOTIVATIONAL BANNER
+===================================================== */
+#motivational-banner {
+  background: linear-gradient(90deg, #0D1117 0%, #1a2332 50%, #0D1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--green);
+  letter-spacing: 0.03em;
+  font-style: italic;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+#motivational-banner:hover { background: var(--green-dim); }
+
+/* =====================================================
+   HEADER
+===================================================== */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--green), #00a87b);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 16px rgba(0,200,150,0.3);
+}
+.logo span { color: var(--text-2); font-weight: 400; font-size: 0.85rem; margin-left: 4px; }
+
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn-icon {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all var(--transition);
+}
+.btn-icon:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* =====================================================
+   NAV TABS
+===================================================== */
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+nav::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  padding: 14px 18px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--transition);
+  display: flex; align-items: center; gap: 7px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* =====================================================
+   MAIN LAYOUT
+===================================================== */
+main { max-width: 900px; margin: 0 auto; padding: 24px 16px 80px; }
+
+.tab-panel { display: none; animation: fadeIn 0.3s ease; }
+.tab-panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* =====================================================
+   SECTION HEADINGS
+===================================================== */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+.section-title .icon { font-size: 1.2rem; }
+
+/* =====================================================
+   CARDS
+===================================================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color var(--transition);
+}
+.card:hover { border-color: #3d454f; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent-color, var(--green));
+}
+.stat-label { font-size: 0.75rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  transition: filter var(--transition);
+}
+.stat-sub { font-size: 0.75rem; color: var(--text-2); margin-top: 4px; }
+
+/* =====================================================
+   FORM ELEMENTS
+===================================================== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+
+label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input[type="text"], input[type="number"], input[type="date"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.95rem;
+  padding: 11px 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,200,150,0.12); }
+input::placeholder { color: var(--text-3); }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--green), #00a87b);
+  color: #0D1117;
+  box-shadow: 0 4px 16px rgba(0,200,150,0.25);
+}
+.btn-primary:hover:not(:disabled) { box-shadow: 0 6px 24px rgba(0,200,150,0.4); transform: translateY(-1px); }
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-secondary:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+
+.btn-danger {
+  background: rgba(248,81,73,0.1);
+  border: 1px solid rgba(248,81,73,0.3);
+  color: var(--red);
+}
+.btn-danger:hover:not(:disabled) { background: rgba(248,81,73,0.2); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #a8862a);
+  color: #0D1117;
+}
+.btn-gold:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(201,168,76,0.3); transform: translateY(-1px); }
+
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+/* =====================================================
+   PROGRESS BARS
+===================================================== */
+.progress-wrap { margin-bottom: 20px; }
+.progress-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.progress-label { font-size: 0.85rem; font-weight: 500; }
+.progress-pct { font-size: 0.85rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.progress-bar {
+  height: 8px;
+  background: var(--surface);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  background: linear-gradient(90deg, var(--fill-from, var(--green)), var(--fill-to, #00a87b));
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 12px;
+  background: rgba(255,255,255,0.35);
+  filter: blur(3px);
+}
+.progress-bar.lg { height: 14px; }
+
+/* =====================================================
+   MILESTONE CARDS
+===================================================== */
+.milestone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+
+.milestone-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.milestone-card:hover { transform: translateY(-2px); }
+.milestone-card.achieved { border-color: var(--gold); background: linear-gradient(135deg, var(--card) 0%, rgba(201,168,76,0.06) 100%); }
+.milestone-card.achieved::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--gold), #ffd700); }
+
+.milestone-badge {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 1.4rem;
+  filter: drop-shadow(0 0 8px rgba(201,168,76,0.5));
+}
+.milestone-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-2); margin-bottom: 4px; }
+.milestone-value { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+.milestone-detail { font-size: 0.78rem; color: var(--text-2); line-height: 1.5; }
+.milestone-detail strong { color: var(--text); }
+.milestone-achieved-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.3);
+  color: var(--gold); font-size: 0.72rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 99px; margin-top: 8px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+/* =====================================================
+   TIMELINE
+===================================================== */
+.timeline { margin: 24px 0; }
+.timeline-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.timeline-item:last-child { border-bottom: none; }
+
+.timeline-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+.timeline-dot.done { background: var(--gold-dim); border-color: var(--gold); }
+.timeline-dot.next { background: var(--green-dim); border-color: var(--green); animation: pulse 2s infinite; }
+
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,200,150,0.3)} 50%{box-shadow:0 0 0 8px rgba(0,200,150,0)} }
+
+.timeline-content { flex: 1; }
+.timeline-label { font-size: 0.88rem; font-weight: 600; }
+.timeline-date { font-size: 0.78rem; color: var(--text-2); margin-top: 2px; }
+.timeline-amount { font-size: 0.78rem; color: var(--green); margin-top: 2px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* =====================================================
+   ALERTS
+===================================================== */
+.alerts-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.alert {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+
+.alert-green { background: rgba(0,200,150,0.08); border: 1px solid rgba(0,200,150,0.2); color: #6ee7c7; }
+.alert-gold { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); color: #dbb96a; }
+.alert-blue { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); color: #7db9ff; }
+.alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* =====================================================
+   APORTE HISTORY
+===================================================== */
+.aporte-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: border-color var(--transition);
+}
+.aporte-item:hover { border-color: #3d454f; }
+.aporte-left { flex: 1; }
+.aporte-desc { font-size: 0.88rem; font-weight: 500; }
+.aporte-date { font-size: 0.75rem; color: var(--text-2); }
+.aporte-value { font-size: 1rem; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; margin-right: 8px; }
+.aporte-actions { display: flex; gap: 6px; }
+
+/* =====================================================
+   SIMULATOR
+===================================================== */
+.sim-comparison {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  margin-top: 16px;
+}
+@media (max-width: 520px) { .sim-comparison { grid-template-columns: 1fr; } }
+
+.sim-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.sim-col.highlight { border-color: var(--blue); background: var(--blue-dim); }
+.sim-col-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-2); margin-bottom: 10px; font-weight: 600; }
+.sim-row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.84rem; }
+.sim-row .name { color: var(--text-2); }
+.sim-row .val { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* =====================================================
+   MODAL / OVERLAY
+===================================================== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 420px; width: 100%;
+  box-shadow: var(--shadow);
+}
+.modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+.modal p { color: var(--text-2); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px; }
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* =====================================================
+   TOAST NOTIFICATIONS
+===================================================== */
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 300;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  max-width: 300px;
+  display: flex; align-items: center; gap: 10px;
+  pointer-events: all;
+  animation: toastIn 0.3s ease;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error   { border-left: 3px solid var(--red); }
+.toast.info    { border-left: 3px solid var(--blue); }
+
+/* =====================================================
+   DISCLAIMER
+===================================================== */
+.disclaimer {
+  background: rgba(88,166,255,0.06);
+  border: 1px solid rgba(88,166,255,0.15);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-top: 24px;
+  display: flex; gap: 8px;
+}
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+.empty-state {
+  text-align: center; padding: 48px 20px;
+  color: var(--text-2);
+}
+.empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+.empty-state h3 { font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+.empty-state p { font-size: 0.85rem; }
+
+/* =====================================================
+   HIDDEN VALUES
+===================================================== */
+body.values-hidden .mask-value { filter: blur(6px); user-select: none; }
+
+/* =====================================================
+   EXPORT TEXT
+===================================================== */
+#export-text { display: none; }
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+@media (max-width: 640px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .milestone-grid { grid-template-columns: 1fr; }
+  header { padding: 12px 14px; }
+  main { padding: 16px 12px 80px; }
+  .stat-value { font-size: 1.2rem; }
+}
+@media (max-width: 380px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+
+/* =====================================================
+   COIN ANIMATION (signature element)
+===================================================== */
+.coin-stack {
+  display: flex; gap: 4px; align-items: flex-end;
+  height: 32px; margin-bottom: 12px;
+}
+.coin {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--border);
+  border: 2px solid transparent;
+  transition: all 0.4s ease;
+  flex-shrink: 0;
+}
+.coin.lit { background: radial-gradient(circle at 35% 35%, #ffd700, #c9a84c); border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4); }
+
+/* =====================================================
+   TAG
+===================================================== */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 99px;
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.tag-green { background: rgba(0,200,150,0.12); color: var(--green); border: 1px solid rgba(0,200,150,0.2); }
+.tag-gold  { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* extra spacing helpers */
+.mb-0{margin-bottom:0}.mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mb-24{margin-bottom:24px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}
+.flex-center{display:flex;align-items:center;justify-content:center}
+.gap-8{gap:8px}.gap-12{gap:12px}
+.text-green{color:var(--green)}.text-gold{color:var(--gold)}.text-red{color:var(--red)}.text-muted{color:var(--text-2)}
+</style>
+</head>
+<body>
+
+<!-- ===== MOTIVATIONAL BANNER ===== -->
+<div id="motivational-banner" onclick="rotateFrase()"></div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🪙</div>
+    Reserva <span>Calculadora</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" id="btn-hide" title="Ocultar valores" onclick="toggleHide()">👁️</button>
+    <button class="btn-icon" id="btn-export" title="Exportar resumo" onclick="exportarResumo()">📤</button>
+    <button class="btn-icon" title="Resetar tudo" onclick="confirmarReset()">🗑️</button>
+  </div>
+</header>
+
+<!-- ===== NAV TABS ===== -->
+<nav id="main-nav">
+  <button class="tab-btn active" onclick="showTab('setup',this)" data-tab="setup">⚙️ Configurar</button>
+  <button class="tab-btn" onclick="showTab('dashboard',this)" data-tab="dashboard">📊 Dashboard</button>
+  <button class="tab-btn" onclick="showTab('aportes',this)" data-tab="aportes">💰 Aportes</button>
+  <button class="tab-btn" onclick="showTab('simulador',this)" data-tab="simulador">🔮 Simulador</button>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+  <!-- ==========================
+       TAB: SETUP
+  =========================== -->
+  <div class="tab-panel active" id="tab-setup">
+    <div class="card mb-20">
+      <div class="section-title"><span class="icon">🎯</span> Defina sua meta de reserva</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="f-nome">Nome da meta</label>
+          <input type="text" id="f-nome" placeholder="Ex.: Minha reserva de emergência" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label for="f-gasto">Gasto mensal atual (R$)</label>
+          <input type="number" id="f-gasto" placeholder="Ex.: 3000" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label for="f-guardado">Valor já guardado (R$)</label>
+          <input type="number" id="f-guardado" placeholder="Ex.: 500" min="0" step="1">
+        </div>
+        <div class="form-group">
+          <label for="f-aporte">Quanto pode guardar por mês (R$)</label>
+          <input type="number" id="f-aporte" placeholder="Ex.: 600" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label for="f-meta-custom">Meta personalizada (R$) – opcional</label>
+          <input type="number" id="f-meta-custom" placeholder="Deixe vazio = 6 meses" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label for="f-inicio">Data de início</label>
+          <input type="date" id="f-inicio">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="salvarConfig()">✅ Salvar e calcular</button>
+        <button class="btn btn-secondary" onclick="preencherDemo()">💡 Ver exemplo</button>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <span>ℹ️</span>
+      <span><strong>Aviso educativo:</strong> Este simulador tem fins educativos e não substitui orientação financeira profissional. Consulte um especialista antes de tomar decisões financeiras importantes.</span>
+    </div>
+  </div>
+
+  <!-- ==========================
+       TAB: DASHBOARD
+  =========================== -->
+  <div class="tab-panel" id="tab-dashboard">
+    <div id="dashboard-empty" class="empty-state" style="display:none">
+      <div class="icon">📊</div>
+      <h3>Nenhuma meta configurada</h3>
+      <p>Configure sua meta na aba <strong>Configurar</strong> para ver o dashboard.</p>
+    </div>
+    <div id="dashboard-content">
+
+      <!-- Alerts -->
+      <div class="alerts-container" id="alerts-box"></div>
+
+      <!-- KPI Cards -->
+      <div class="card-grid" id="kpi-grid"></div>
+
+      <!-- Progress geral -->
+      <div class="card mb-20" id="progress-section">
+        <div class="section-title"><span class="icon">📈</span> Progresso Geral</div>
+        <div class="progress-wrap">
+          <div class="progress-header">
+            <span class="progress-label">Progresso até a meta de 6 meses</span>
+            <span class="progress-pct text-green" id="pct-geral">0%</span>
+          </div>
+          <div class="progress-bar lg"><div class="progress-fill" id="bar-geral" style="width:0%"></div></div>
+        </div>
+        <div id="coin-area" class="coin-stack"></div>
+      </div>
+
+      <!-- Milestone Cards -->
+      <div class="section-title"><span class="icon">🏆</span> Marcos de Reserva</div>
+      <div class="milestone-grid" id="milestone-grid"></div>
+
+      <!-- Timeline -->
+      <div class="card mb-20">
+        <div class="section-title"><span class="icon">📅</span> Linha do Tempo</div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+
+      <!-- Barras por marco -->
+      <div class="card mb-20">
+        <div class="section-title"><span class="icon">📏</span> Progresso por Marco</div>
+        <div id="progress-bars"></div>
+      </div>
+
+      <div class="disclaimer">
+        <span>ℹ️</span>
+        <span>Este simulador tem fins educativos e não substitui orientação financeira profissional.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       TAB: APORTES
+  =========================== -->
+  <div class="tab-panel" id="tab-aportes">
+    <div class="card mb-20">
+      <div class="section-title"><span class="icon">➕</span> Adicionar Aporte</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="a-valor">Valor (R$)</label>
+          <input type="number" id="a-valor" placeholder="Ex.: 600" min="0.01" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="a-data">Data do aporte</label>
+          <input type="date" id="a-data">
+        </div>
+        <div class="form-group full">
+          <label for="a-desc">Descrição (opcional)</label>
+          <input type="text" id="a-desc" placeholder="Ex.: Salário de julho" maxlength="60">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="adicionarAporte()">💰 Adicionar aporte</button>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="icon">📋</span> Histórico de Aportes</div>
+    <div id="aportes-list">
+      <div class="empty-state">
+        <div class="icon">💸</div>
+        <h3>Nenhum aporte registrado</h3>
+        <p>Adicione seu primeiro aporte acima.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       TAB: SIMULADOR
+  =========================== -->
+  <div class="tab-panel" id="tab-simulador">
+    <div class="card mb-20">
+      <div class="section-title"><span class="icon">🔮</span> Simule outros cenários</div>
+      <p class="text-muted mb-16" style="font-size:.87rem">Teste quanto guardar por mês para antecipar ou ver o impacto na sua meta.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="sim-aporte">Valor mensal simulado (R$)</label>
+          <input type="number" id="sim-aporte" placeholder="Ex.: 800" min="1" step="1" oninput="simular()">
+        </div>
+        <div class="form-group">
+          <label for="sim-guardado">Valor já guardado simulado (R$)</label>
+          <input type="number" id="sim-guardado" placeholder="Deixe vazio = valor atual" min="0" step="1" oninput="simular()">
+        </div>
+      </div>
+    </div>
+
+    <div id="sim-empty" class="empty-state" style="display:none">
+      <div class="icon">🔮</div>
+      <h3>Configure uma meta primeiro</h3>
+      <p>Acesse a aba <strong>Configurar</strong> para definir seus dados.</p>
+    </div>
+
+    <div id="sim-result" style="display:none">
+      <div class="section-title"><span class="icon">⚖️</span> Comparação de Cenários</div>
+      <div class="sim-comparison" id="sim-comparison"></div>
+      <div id="sim-insight" class="alert alert-blue mt-16" style="display:none">
+        <span class="alert-icon">💡</span>
+        <span id="sim-insight-text"></span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar</h3>
+    <p id="modal-body">Tem certeza?</p>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div class="modal-overlay hidden" id="edit-modal-overlay">
+  <div class="modal">
+    <h3>✏️ Editar Aporte</h3>
+    <div class="form-group mb-12">
+      <label for="edit-valor">Valor (R$)</label>
+      <input type="number" id="edit-valor" min="0.01" step="0.01">
+    </div>
+    <div class="form-group mb-12">
+      <label for="edit-data">Data</label>
+      <input type="date" id="edit-data">
+    </div>
+    <div class="form-group mb-20">
+      <label for="edit-desc">Descrição</label>
+      <input type="text" id="edit-desc" maxlength="60">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="fecharEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoAporte()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   STATE & STORAGE
+===================================================== */
+const STORAGE_KEY = 'calculadora_reserva_v1';
+
+let state = {
+  config: null,    // { nome, gasto, guardado, aporteMensal, metaCustom, inicio }
+  aportes: [],     // [{ id, valor, data, desc }]
+  hideValues: false,
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { const saved = JSON.parse(raw); state = { ...state, ...saved }; }
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+/* =====================================================
+   FRASES MOTIVACIONAIS
+===================================================== */
+const frases = [
+  "\"Reserva não é dinheiro parado — é liberdade comprada.\"",
+  "\"A melhor hora de guardar dinheiro foi ontem. A segunda melhor é agora.\"",
+  "\"Cada real guardado é um passo a menos na dependência do imprevisto.\"",
+  "\"Segurança financeira começa com a primeira moeda guardada.\"",
+  "\"Quem tem reserva não tem medo — tem escolha.\"",
+  "\"Sua reserva é seu escudo. Quanto mais robusto, mais livre você é.\"",
+  "\"Disciplina hoje, liberdade amanhã.\"",
+  "\"O hábito de guardar cria o patrimônio de uma vida.\"",
+];
+let fraseIdx = Math.floor(Math.random() * frases.length);
+
+function rotateFrase() {
+  fraseIdx = (fraseIdx + 1) % frases.length;
+  document.getElementById('motivational-banner').textContent = frases[fraseIdx];
+}
+
+/* =====================================================
+   TABS
+===================================================== */
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'aportes') renderAportes();
+  if (id === 'simulador') initSimulador();
+}
+
+/* =====================================================
+   UTILS
+===================================================== */
+function fmtBRL(v) {
+  if (typeof v !== 'number') v = parseFloat(v) || 0;
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtPct(v) { return Math.min(v, 100).toFixed(1) + '%'; }
+
+function addMonths(dateStr, months) {
+  // returns Date
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function fmtDate(d) {
+  if (!(d instanceof Date)) d = new Date(d + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function monthsBetween(from, to) {
+  const f = new Date(from + 'T12:00:00');
+  const t = to instanceof Date ? to : new Date(to + 'T12:00:00');
+  return (t.getFullYear() - f.getFullYear()) * 12 + (t.getMonth() - f.getMonth()) + (t.getDate() - f.getDate()) / 30;
+}
+
+function calcMonthsNeeded(meta, guardado, aporte) {
+  if (aporte <= 0) return Infinity;
+  if (guardado >= meta) return 0;
+  return Math.ceil((meta - guardado) / aporte);
+}
+
+function calcDateForMeta(guardado, aporte, meta, inicio) {
+  const months = calcMonthsNeeded(meta, guardado, aporte);
+  if (months === Infinity) return null;
+  if (months === 0) return new Date(inicio + 'T12:00:00');
+  return addMonths(inicio, months);
+}
+
+function totalGuardado() {
+  const base = (state.config ? parseFloat(state.config.guardado) : 0) || 0;
+  const soma = state.aportes.reduce((s, a) => s + parseFloat(a.valor), 0);
+  return base + soma;
+}
+
+/* =====================================================
+   CONFIG / SETUP
+===================================================== */
+function salvarConfig() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const gasto = parseFloat(document.getElementById('f-gasto').value);
+  const guardado = parseFloat(document.getElementById('f-guardado').value) || 0;
+  const aporte = parseFloat(document.getElementById('f-aporte').value);
+  const metaCustom = parseFloat(document.getElementById('f-meta-custom').value) || null;
+  const inicio = document.getElementById('f-inicio').value;
+
+  // Validations
+  const erros = [];
+  if (!nome) erros.push('Informe o nome da meta.');
+  if (!gasto || gasto <= 0) erros.push('Gasto mensal deve ser maior que zero.');
+  if (!aporte || aporte <= 0) erros.push('Valor mensal a guardar deve ser maior que zero.');
+  if (!inicio) erros.push('Selecione a data de início.');
+  if (erros.length) { toast(erros[0], 'error'); return; }
+
+  state.config = { nome, gasto, guardado, aporteMensal: aporte, metaCustom, inicio };
+  saveState();
+  toast('✅ Meta salva com sucesso!', 'success');
+
+  // auto navigate to dashboard
+  const dashBtn = document.querySelector('[data-tab="dashboard"]');
+  showTab('dashboard', dashBtn);
+}
+
+function preencherDemo() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-nome').value = 'Reserva de Emergência';
+  document.getElementById('f-gasto').value = '3500';
+  document.getElementById('f-guardado').value = '2000';
+  document.getElementById('f-aporte').value = '700';
+  document.getElementById('f-meta-custom').value = '';
+  document.getElementById('f-inicio').value = today;
+  toast('💡 Dados de exemplo preenchidos!', 'info');
+}
+
+function preencherFormConfig() {
+  if (!state.config) return;
+  const c = state.config;
+  document.getElementById('f-nome').value = c.nome || '';
+  document.getElementById('f-gasto').value = c.gasto || '';
+  document.getElementById('f-guardado').value = c.guardado || '';
+  document.getElementById('f-aporte').value = c.aporteMensal || '';
+  document.getElementById('f-meta-custom').value = c.metaCustom || '';
+  document.getElementById('f-inicio').value = c.inicio || '';
+}
+
+/* =====================================================
+   CALCULATIONS
+===================================================== */
+function calcular() {
+  if (!state.config) return null;
+  const c = state.config;
+  const gasto = parseFloat(c.gasto);
+  const aporte = parseFloat(c.aporteMensal);
+  const inicio = c.inicio;
+  const guardado = totalGuardado();
+
+  const meta1 = gasto * 1;
+  const meta3 = gasto * 3;
+  const meta6 = gasto * 6;
+  const metaFinal = c.metaCustom || meta6;
+
+  const pct1 = Math.min((guardado / meta1) * 100, 100);
+  const pct3 = Math.min((guardado / meta3) * 100, 100);
+  const pct6 = Math.min((guardado / meta6) * 100, 100);
+  const pctFinal = Math.min((guardado / metaFinal) * 100, 100);
+
+  const date1 = calcDateForMeta(guardado, aporte, meta1, inicio);
+  const date3 = calcDateForMeta(guardado, aporte, meta3, inicio);
+  const date6 = calcDateForMeta(guardado, aporte, meta6, inicio);
+  const dateFinal = calcDateForMeta(guardado, aporte, metaFinal, inicio);
+
+  const months1 = calcMonthsNeeded(meta1, guardado, aporte);
+  const months3 = calcMonthsNeeded(meta3, guardado, aporte);
+  const months6 = calcMonthsNeeded(meta6, guardado, aporte);
+
+  // próximo marco
+  let proximoMarco = null, proximoMeses = null, proximoData = null;
+  if (guardado < meta1) { proximoMarco = '1 mês'; proximoMeses = months1; proximoData = date1; }
+  else if (guardado < meta3) { proximoMarco = '3 meses'; proximoMeses = months3; proximoData = date3; }
+  else if (guardado < meta6) { proximoMarco = '6 meses'; proximoMeses = months6; proximoData = date6; }
+
+  return {
+    gasto, aporte, guardado, inicio, metaFinal, c,
+    meta1, meta3, meta6,
+    pct1, pct3, pct6, pctFinal,
+    date1, date3, date6, dateFinal,
+    months1, months3, months6,
+    proximoMarco, proximoMeses, proximoData,
+    achieved1: guardado >= meta1,
+    achieved3: guardado >= meta3,
+    achieved6: guardado >= meta6,
+    falta1: Math.max(meta1 - guardado, 0),
+    falta3: Math.max(meta3 - guardado, 0),
+    falta6: Math.max(meta6 - guardado, 0),
+  };
+}
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+function renderDashboard() {
+  const data = calcular();
+  const empty = document.getElementById('dashboard-empty');
+  const content = document.getElementById('dashboard-content');
+
+  if (!data) {
+    empty.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  content.style.display = 'block';
+
+  renderAlerts(data);
+  renderKPIs(data);
+  renderProgressGeral(data);
+  renderMilestones(data);
+  renderTimeline(data);
+  renderProgressBars(data);
+}
+
+function renderAlerts(data) {
+  const box = document.getElementById('alerts-box');
+  const alerts = [];
+
+  if (data.achieved6) alerts.push({ type: 'gold', icon: '🏆', msg: 'Parabéns! Você atingiu 6 meses de reserva — meta principal alcançada!' });
+  else if (data.achieved3) alerts.push({ type: 'gold', icon: '🥈', msg: 'Incrível! Você já tem 3 meses de reserva. Continue para conquistar 6 meses!' });
+  else if (data.achieved1) alerts.push({ type: 'green', icon: '🥉', msg: 'Você atingiu 1 mês de reserva! Ótimo começo — siga em frente!' });
+
+  if (!data.achieved6 && data.proximoMarco && data.falta3 > 0 && data.falta3 < 100)
+    alerts.push({ type: 'gold', icon: '⚡', msg: `Faltam apenas ${fmtBRL(data.falta3)} para você atingir 3 meses de reserva!` });
+  else if (!data.achieved1 && data.falta1 < 100)
+    alerts.push({ type: 'gold', icon: '⚡', msg: `Faltam apenas ${fmtBRL(data.falta1)} para atingir seu primeiro marco!` });
+
+  const aporte50 = data.aporte + 50;
+  const meses50 = calcMonthsNeeded(data.meta6, data.guardado, aporte50);
+  if (meses50 < data.months6 - 1 && !data.achieved6)
+    alerts.push({ type: 'blue', icon: '💡', msg: `Aumentando ${fmtBRL(50)} por mês, você antecipa a meta de 6 meses em ${data.months6 - meses50} meses!` });
+
+  if (data.pct6 >= 50 && !data.achieved6)
+    alerts.push({ type: 'green', icon: '📈', msg: 'Sua reserva está evoluindo bem — você já passou da metade do caminho para 6 meses!' });
+
+  if (alerts.length === 0 && data.guardado === 0)
+    alerts.push({ type: 'blue', icon: '🚀', msg: 'Adicione seus aportes na aba "Aportes" para acompanhar sua evolução em tempo real.' });
+
+  box.innerHTML = alerts.map(a =>
+    `<div class="alert alert-${a.type}"><span class="alert-icon">${a.icon}</span><span>${a.msg}</span></div>`
+  ).join('');
+}
+
+function renderKPIs(data) {
+  const grid = document.getElementById('kpi-grid');
+  const items = [
+    { label: 'Valor guardado', value: fmtBRL(data.guardado), sub: `de ${fmtBRL(data.meta6)} (6 meses)`, color: 'var(--green)' },
+    { label: 'Meta de 6 meses', value: fmtBRL(data.meta6), sub: `Gasto mensal: ${fmtBRL(data.gasto)}`, color: 'var(--gold)' },
+    { label: 'Progresso atual', value: fmtPct(data.pctFinal), sub: `${fmtBRL(data.falta6)} restante`, color: 'var(--blue)' },
+    { label: 'Aporte mensal', value: fmtBRL(data.aporte), sub: `Planejado por mês`, color: 'var(--green)' },
+    { label: 'Próximo marco', value: data.proximoMarco || '🏆 Meta final!', sub: data.proximoData ? `Previsto: ${fmtDate(data.proximoData)}` : '—', color: 'var(--gold)' },
+    { label: 'Tempo restante', value: data.proximoMeses != null ? `${data.proximoMeses} mes${data.proximoMeses !== 1 ? 'es' : ''}` : '—', sub: data.proximoMarco ? `Para ${data.proximoMarco}` : 'Meta alcançada', color: 'var(--blue)' },
+  ];
+  grid.innerHTML = items.map(i => `
+    <div class="stat-card" style="--accent-color:${i.color}">
+      <div class="stat-label">${i.label}</div>
+      <div class="stat-value mask-value">${i.value}</div>
+      <div class="stat-sub mask-value">${i.sub}</div>
+    </div>
+  `).join('');
+}
+
+function renderProgressGeral(data) {
+  const bar = document.getElementById('bar-geral');
+  const pct = document.getElementById('pct-geral');
+  bar.style.width = data.pctFinal + '%';
+  pct.textContent = fmtPct(data.pctFinal);
+
+  // Coin animation — 10 coins represent 10% each
+  const coinArea = document.getElementById('coin-area');
+  const lit = Math.round(data.pctFinal / 10);
+  coinArea.innerHTML = Array.from({ length: 10 }, (_, i) =>
+    `<div class="coin${i < lit ? ' lit' : ''}"></div>`
+  ).join('');
+}
+
+function renderMilestones(data) {
+  const grid = document.getElementById('milestone-grid');
+  const marcos = [
+    { label: '1 Mês de Reserva', meta: data.meta1, pct: data.pct1, achieved: data.achieved1, falta: data.falta1, meses: data.months1, date: data.date1, emoji: '🥉' },
+    { label: '3 Meses de Reserva', meta: data.meta3, pct: data.pct3, achieved: data.achieved3, falta: data.falta3, meses: data.months3, date: data.date3, emoji: '🥈' },
+    { label: '6 Meses de Reserva', meta: data.meta6, pct: data.pct6, achieved: data.achieved6, falta: data.falta6, meses: data.months6, date: data.date6, emoji: '🏆' },
+  ];
+
+  grid.innerHTML = marcos.map(m => `
+    <div class="milestone-card ${m.achieved ? 'achieved' : ''}">
+      <div class="milestone-badge">${m.emoji}</div>
+      <div class="milestone-title">${m.label}</div>
+      <div class="milestone-value mask-value">${fmtBRL(m.meta)}</div>
+      <div class="progress-bar mb-8"><div class="progress-fill" style="width:${m.pct}%${m.achieved ? ';background:linear-gradient(90deg,var(--gold),#ffd700)' : ''}"></div></div>
+      <div class="milestone-detail">
+        ${m.achieved
+          ? '<strong style="color:var(--gold)">✅ Marco atingido!</strong>'
+          : `Falta: <strong class="mask-value">${fmtBRL(m.falta)}</strong> &bull; ${m.meses} mes${m.meses!==1?'es':''}`}
+        <br>Previsão: <strong class="mask-value">${m.date ? fmtDate(m.date) : '—'}</strong>
+      </div>
+      ${m.achieved ? '<div class="milestone-achieved-tag">✨ Conquistado</div>' : ''}
+    </div>
+  `).join('');
+}
+
+function renderTimeline(data) {
+  const tl = document.getElementById('timeline');
+  const items = [];
+
+  const today = new Date();
+  items.push({ dot: 'done', icon: '🚀', label: `Início: ${data.c.nome}`, date: `${fmtDate(data.inicio)} — Guardado: ${fmtBRL(data.guardado)}`, amount: '' });
+
+  const marcos = [
+    { label: '🥉 Marco: 1 mês de reserva', meta: data.meta1, date: data.date1, achieved: data.achieved1 },
+    { label: '🥈 Marco: 3 meses de reserva', meta: data.meta3, date: data.date3, achieved: data.achieved3 },
+    { label: '🏆 Marco: 6 meses de reserva', meta: data.meta6, date: data.date6, achieved: data.achieved6 },
+  ];
+
+  let isNext = true;
+  marcos.forEach(m => {
+    const done = m.achieved;
+    const next = !done && isNext;
+    if (next) isNext = false;
+    items.push({
+      dot: done ? 'done' : (next ? 'next' : ''),
+      icon: done ? '✅' : (next ? '⭐' : '⏳'),
+      label: m.label,
+      date: m.date ? fmtDate(m.date) : '—',
+      amount: fmtBRL(m.meta),
+    });
+  });
+
+  tl.innerHTML = items.map(i => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${i.dot}">${i.icon}</div>
+      <div class="timeline-content">
+        <div class="timeline-label">${i.label}</div>
+        <div class="timeline-date">${i.date}</div>
+        ${i.amount ? `<div class="timeline-amount mask-value">${i.amount}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderProgressBars(data) {
+  const container = document.getElementById('progress-bars');
+  const bars = [
+    { label: '1 mês', pct: data.pct1, achieved: data.achieved1 },
+    { label: '3 meses', pct: data.pct3, achieved: data.achieved3 },
+    { label: '6 meses', pct: data.pct6, achieved: data.achieved6 },
+  ];
+  container.innerHTML = bars.map(b => `
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">${b.label} ${b.achieved ? '✅' : ''}</span>
+        <span class="progress-pct" style="color:${b.achieved ? 'var(--gold)' : 'var(--green)'}">${fmtPct(b.pct)}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${b.pct}%;${b.achieved ? '--fill-from:var(--gold);--fill-to:#ffd700' : ''}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =====================================================
+   APORTES
+===================================================== */
+function adicionarAporte() {
+  const valor = parseFloat(document.getElementById('a-valor').value);
+  const data = document.getElementById('a-data').value;
+  const desc = document.getElementById('a-desc').value.trim() || 'Aporte';
+
+  if (!valor || valor <= 0) { toast('Informe um valor válido.', 'error'); return; }
+  if (!data) { toast('Selecione a data do aporte.', 'error'); return; }
+
+  const id = Date.now().toString();
+  state.aportes.push({ id, valor, data, desc });
+  saveState();
+
+  document.getElementById('a-valor').value = '';
+  document.getElementById('a-desc').value = '';
+
+  toast('💰 Aporte adicionado!', 'success');
+  renderAportes();
+}
+
+function renderAportes() {
+  const list = document.getElementById('aportes-list');
+  if (state.aportes.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">💸</div><h3>Nenhum aporte registrado</h3><p>Adicione seu primeiro aporte acima.</p></div>`;
+    return;
+  }
+  const sorted = [...state.aportes].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const total = state.aportes.reduce((s, a) => s + parseFloat(a.valor), 0);
+
+  list.innerHTML = `
+    <div class="card mb-12" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px">
+      <span class="text-muted" style="font-size:.85rem">Total de aportes registrados</span>
+      <span style="font-size:1.1rem;font-weight:700;color:var(--green)" class="mask-value">${fmtBRL(total)}</span>
+    </div>
+    ${sorted.map(a => `
+    <div class="aporte-item">
+      <div class="aporte-left">
+        <div class="aporte-desc">${a.desc}</div>
+        <div class="aporte-date">${fmtDate(a.data)}</div>
+      </div>
+      <span class="aporte-value mask-value">${fmtBRL(parseFloat(a.valor))}</span>
+      <div class="aporte-actions">
+        <button class="btn btn-secondary btn-sm" onclick="abrirEditAporte('${a.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarDeleteAporte('${a.id}')">🗑️</button>
+      </div>
+    </div>
+    `).join('')}
+  `;
+}
+
+let editingAporteId = null;
+
+function abrirEditAporte(id) {
+  const a = state.aportes.find(x => x.id === id);
+  if (!a) return;
+  editingAporteId = id;
+  document.getElementById('edit-valor').value = a.valor;
+  document.getElementById('edit-data').value = a.data;
+  document.getElementById('edit-desc').value = a.desc;
+  document.getElementById('edit-modal-overlay').classList.remove('hidden');
+}
+
+function fecharEditModal() {
+  document.getElementById('edit-modal-overlay').classList.add('hidden');
+  editingAporteId = null;
+}
+
+function salvarEdicaoAporte() {
+  const valor = parseFloat(document.getElementById('edit-valor').value);
+  const data = document.getElementById('edit-data').value;
+  const desc = document.getElementById('edit-desc').value.trim() || 'Aporte';
+  if (!valor || valor <= 0) { toast('Valor inválido.', 'error'); return; }
+  if (!data) { toast('Data inválida.', 'error'); return; }
+  const idx = state.aportes.findIndex(x => x.id === editingAporteId);
+  if (idx >= 0) { state.aportes[idx] = { ...state.aportes[idx], valor, data, desc }; }
+  saveState();
+  fecharEditModal();
+  renderAportes();
+  toast('✅ Aporte atualizado!', 'success');
+}
+
+function confirmarDeleteAporte(id) {
+  abrirModal(
+    '🗑️ Excluir aporte',
+    'Tem certeza que deseja excluir este aporte? Essa ação não pode ser desfeita.',
+    () => { state.aportes = state.aportes.filter(a => a.id !== id); saveState(); renderAportes(); toast('Aporte excluído.', 'info'); }
+  );
+}
+
+/* =====================================================
+   SIMULADOR
+===================================================== */
+function initSimulador() {
+  if (!state.config) {
+    document.getElementById('sim-empty').style.display = 'block';
+    document.getElementById('sim-result').style.display = 'none';
+    return;
+  }
+  document.getElementById('sim-empty').style.display = 'none';
+  document.getElementById('sim-result').style.display = 'block';
+  simular();
+}
+
+function simular() {
+  if (!state.config) return;
+  const data = calcular();
+  if (!data) return;
+
+  const simAporte = parseFloat(document.getElementById('sim-aporte').value) || data.aporte;
+  const simGuardado = parseFloat(document.getElementById('sim-guardado').value);
+  const guardadoSim = isNaN(simGuardado) ? data.guardado : simGuardado;
+
+  const sim6 = calcMonthsNeeded(data.meta6, guardadoSim, simAporte);
+  const sim3 = calcMonthsNeeded(data.meta3, guardadoSim, simAporte);
+  const sim1 = calcMonthsNeeded(data.meta1, guardadoSim, simAporte);
+  const simDate6 = calcDateForMeta(guardadoSim, simAporte, data.meta6, data.inicio);
+  const simDate3 = calcDateForMeta(guardadoSim, simAporte, data.meta3, data.inicio);
+  const simDate1 = calcDateForMeta(guardadoSim, simAporte, data.meta1, data.inicio);
+
+  const comp = document.getElementById('sim-comparison');
+  comp.innerHTML = `
+    <div class="sim-col">
+      <div class="sim-col-label">📌 Cenário atual</div>
+      <div class="sim-row"><span class="name">Aporte mensal</span><span class="val mask-value">${fmtBRL(data.aporte)}</span></div>
+      <div class="sim-row"><span class="name">Guardado</span><span class="val mask-value">${fmtBRL(data.guardado)}</span></div>
+      <div class="divider"></div>
+      <div class="sim-row"><span class="name">1 mês</span><span class="val">${data.months1 === 0 ? '✅' : data.months1 + ' mes' + (data.months1 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">3 meses</span><span class="val">${data.months3 === 0 ? '✅' : data.months3 + ' mes' + (data.months3 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">6 meses</span><span class="val">${data.months6 === 0 ? '✅' : data.months6 + ' mes' + (data.months6 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">Data 6 meses</span><span class="val mask-value">${data.date6 ? fmtDate(data.date6) : '—'}</span></div>
+    </div>
+    <div class="sim-col highlight">
+      <div class="sim-col-label">🔮 Cenário simulado</div>
+      <div class="sim-row"><span class="name">Aporte mensal</span><span class="val mask-value">${fmtBRL(simAporte)}</span></div>
+      <div class="sim-row"><span class="name">Guardado</span><span class="val mask-value">${fmtBRL(guardadoSim)}</span></div>
+      <div class="divider"></div>
+      <div class="sim-row"><span class="name">1 mês</span><span class="val">${sim1 === 0 ? '✅' : sim1 + ' mes' + (sim1 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">3 meses</span><span class="val">${sim3 === 0 ? '✅' : sim3 + ' mes' + (sim3 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">6 meses</span><span class="val">${sim6 === 0 ? '✅' : sim6 + ' mes' + (sim6 !== 1 ? 'es' : '')}</span></div>
+      <div class="sim-row"><span class="name">Data 6 meses</span><span class="val mask-value">${simDate6 ? fmtDate(simDate6) : '—'}</span></div>
+    </div>
+  `;
+
+  const insight = document.getElementById('sim-insight');
+  const insightText = document.getElementById('sim-insight-text');
+  const diff = data.months6 - sim6;
+  if (diff > 0) {
+    insightText.textContent = `Com ${fmtBRL(simAporte)} por mês, você anteciparia sua meta de 6 meses em ${diff} mês${diff !== 1 ? 'es' : ''}!`;
+    insight.style.display = 'flex';
+  } else if (diff < 0) {
+    insightText.textContent = `Com ${fmtBRL(simAporte)} por mês, você atrasaria sua meta de 6 meses em ${Math.abs(diff)} mês${Math.abs(diff) !== 1 ? 'es' : ''}.`;
+    insight.style.display = 'flex';
+  } else {
+    insight.style.display = 'none';
+  }
+}
+
+/* =====================================================
+   HIDE VALUES
+===================================================== */
+function toggleHide() {
+  state.hideValues = !state.hideValues;
+  document.body.classList.toggle('values-hidden', state.hideValues);
+  document.getElementById('btn-hide').textContent = state.hideValues ? '🙈' : '👁️';
+  saveState();
+}
+
+/* =====================================================
+   EXPORT
+===================================================== */
+function exportarResumo() {
+  if (!state.config) { toast('Configure uma meta primeiro.', 'error'); return; }
+  const data = calcular();
+  const linhas = [
+    '═══════════════════════════════════════',
+    '   CALCULADORA DE RESERVA — RESUMO',
+    '═══════════════════════════════════════',
+    '',
+    `📌 Meta: ${data.c.nome}`,
+    `📅 Data de início: ${fmtDate(data.inicio)}`,
+    '',
+    '--- SITUAÇÃO ATUAL ---',
+    `💰 Valor guardado: ${fmtBRL(data.guardado)}`,
+    `📊 Gasto mensal: ${fmtBRL(data.gasto)}`,
+    `💸 Aporte mensal: ${fmtBRL(data.aporte)}`,
+    '',
+    '--- MARCOS ---',
+    `🥉 1 mês  (${fmtBRL(data.meta1)}): ${data.achieved1 ? 'ATINGIDO ✅' : `${data.months1} meses — ${data.date1 ? fmtDate(data.date1) : '—'}`}`,
+    `🥈 3 meses (${fmtBRL(data.meta3)}): ${data.achieved3 ? 'ATINGIDO ✅' : `${data.months3} meses — ${data.date3 ? fmtDate(data.date3) : '—'}`}`,
+    `🏆 6 meses (${fmtBRL(data.meta6)}): ${data.achieved6 ? 'ATINGIDO ✅' : `${data.months6} meses — ${data.date6 ? fmtDate(data.date6) : '—'}`}`,
+    '',
+    '--- APORTES REGISTRADOS ---',
+    ...state.aportes.map(a => `  • ${fmtDate(a.data)} | ${fmtBRL(parseFloat(a.valor))} — ${a.desc}`),
+    '',
+    '═══════════════════════════════════════',
+    'Este simulador tem fins educativos e',
+    'não substitui orientação financeira',
+    'profissional.',
+    '═══════════════════════════════════════',
+  ];
+
+  const texto = linhas.join('\n');
+  const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'reserva-resumo.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 Resumo exportado!', 'success');
+}
+
+/* =====================================================
+   MODAL
+===================================================== */
+let modalCallback = null;
+
+function abrirModal(titulo, corpo, callback) {
+  document.getElementById('modal-title').textContent = titulo;
+  document.getElementById('modal-body').textContent = corpo;
+  modalCallback = callback;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  modalCallback = null;
+}
+
+document.getElementById('modal-confirm-btn').onclick = function() {
+  if (modalCallback) modalCallback();
+  fecharModal();
+};
+
+function confirmarReset() {
+  abrirModal(
+    '⚠️ Resetar todos os dados',
+    'Todos os dados (meta, aportes e configurações) serão apagados permanentemente. Essa ação não pode ser desfeita.',
+    () => {
+      state = { config: null, aportes: [], hideValues: false };
+      saveState();
+      toast('🗑️ Dados apagados.', 'info');
+      preencherFormConfig();
+      renderDashboard();
+      renderAportes();
+      const setupBtn = document.querySelector('[data-tab="setup"]');
+      showTab('setup', setupBtn);
+    }
+  );
+}
+
+/* =====================================================
+   TOAST
+===================================================== */
+function toast(msg, type = 'info') {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.4s'; setTimeout(() => el.remove(), 400); }, 3200);
+}
+
+/* =====================================================
+   INIT
+===================================================== */
+function init() {
+  loadState();
+
+  // Set default date inputs
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-inicio').value = today;
+  document.getElementById('a-data').value = today;
+
+  // Frase inicial
+  document.getElementById('motivational-banner').textContent = frases[fraseIdx];
+
+  // Restore form if config exists
+  preencherFormConfig();
+
+  // Restore hide state
+  if (state.hideValues) {
+    document.body.classList.add('values-hidden');
+    document.getElementById('btn-hide').textContent = '🙈';
+  }
+
+  // Close modals on overlay click
+  document.getElementById('modal-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharModal(); });
+  document.getElementById('edit-modal-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharEditModal(); });
+}
+
+init();
+</script>
+</body>
+</html>
